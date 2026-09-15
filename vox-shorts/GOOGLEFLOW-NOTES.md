@@ -153,3 +153,47 @@ change for any consumer, since every component still imports the same `FONT_BODY
 file, download its exact woff2(s) via `curl` (works fine — it's specifically the browser
 that doesn't trust the proxy CA, not curl/Node) rather than reaching for
 `@remotion/google-fonts` again.
+
+## Connector reference — Upload-Post (CP_Posting) and Higgsfield
+
+Both are account-level tool connections (MCP servers), not repo code — they work the same
+regardless of which project/repo Claude is in. Documented here so the workflow is explicit
+rather than tribal knowledge.
+
+**Upload-Post (CP_Posting) — posting and pulling profile data**
+- `list_users` — pulls every Upload-Post profile on the account and which social accounts are
+  connected under each, plus per-platform capabilities (e.g. whether a TikTok connection
+  supports music/location/draft mode). This is "pulling data from the profile."
+- Uploading a **local** file is a 3-step stage: `create_media_upload` (get a signed PUT URL) →
+  `curl -X PUT` the actual bytes to it → `complete_media_upload` (returns a `media_url` good
+  for ~6 hours). Only then call `upload_video` with that URL. A public HTTPS URL can skip
+  straight to `upload_video`.
+- `upload_video` is the actual publish/schedule call (platforms, caption, optional
+  `scheduledDate`) — returns a `request_id` immediately; the upload itself is async.
+- `get_status` — poll with the `request_id` until every platform shows `completed`. This is
+  what confirms it's actually live, not just "queued."
+- `list_scheduled` / `get_history` — dedup checks and audit trail.
+- **Discipline layered on top, see `.claude/skills/publish-video/SKILL.md`:** never trust a
+  Drive URL from memory — always re-verify the file's `content-length` against
+  `publishing/registry.json`'s recorded size via curl before posting, and record every real
+  result back into the registry after `get_status` confirms it.
+
+**Higgsfield — generation + the sandbox**
+- `generate_video` / `generate_image` / `generate_audio` are the core generation calls — pick
+  a model, pass a prompt + reference media, get a job back. Local files need
+  `media_upload_widget` first, never raw shell access to attachments.
+- The **sandbox** (`sandbox_exec`) is a separate thing from generation: a real remote Linux box
+  (ffmpeg, ImageMagick, sox, python3, node, Playwright, caption fonts preinstalled) for editing
+  work generation alone can't do — trimming, concatenating, compositing, captioning. Two things
+  make it unusual: it's **ephemeral** (wiped ~10s after each call returns, so a multi-step edit
+  must be chained into one command with `&&`, or inputs need re-downloading next call), and
+  **outputs must be uploaded before the command exits** (`media_upload` first, then
+  `curl -X PUT` inside that SAME command, before it returns).
+- `get_workflow_instructions` — for structured multi-step jobs (UGC ads, ad-multiplier,
+  character sheets, branded assets, website builder), loads a bundled step-by-step SKILL.md
+  before touching generation directly, rather than freelancing the sequence.
+- **Status as of this writing:** Higgsfield is the documented *fallback* generator once
+  Flow/Google AI Pro credits run out (see "Credit economy" above) — it has not actually been
+  used for a real episode yet. All three GoogleFlow Gen episodes so far used Google Flow for
+  generation and this repo's own Remotion engine (not Higgsfield's sandbox) for editing and
+  captions.
