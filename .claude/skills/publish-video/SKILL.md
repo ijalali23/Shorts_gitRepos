@@ -1,6 +1,6 @@
 ---
 name: publish-video
-description: Queue, reschedule, or immediately publish a finished short to the LockedIn Clips channel (Upload-Post profile "Claude": TikTok, Instagram, YouTube) via CP_Posting. Use whenever posting, scheduling, rescheduling, or checking what's live/queued — including after generating a new short-N or vox-N video, or when the user says "schedule this", "post now", "what's scheduled", or asks about the posting queue. Exists because a real incident happened without it: a Drive file ID recalled from conversation memory was reused for the wrong video, posting one short's content under another's title across all three platforms.
+description: Queue, reschedule, or immediately publish a finished short to this channel's connected platforms via CP_Posting (Upload-Post). Use whenever posting, scheduling, rescheduling, or checking what's live/queued — including after generating a new short-N or vox-N video, or when the user says "schedule this", "post now", "what's scheduled", or asks about the posting queue. Exists because a real incident happened without it on a sibling project: a Drive file ID recalled from conversation memory was reused for the wrong video, posting one short's content under another's title across all three platforms.
 ---
 
 # publish-video — never post from memory
